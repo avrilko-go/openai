@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+use axum::response::sse::Event;
 use reqwest::Client;
 use reqwest::header::{ACCEPT, AUTHORIZATION, CACHE_CONTROL, CONNECTION, CONTENT_TYPE, HeaderMap};
 use serde::{Serialize, Deserialize};
@@ -16,7 +18,7 @@ impl Default for PostData {
     fn default() -> Self {
         Self {
             model: "text-davinci-003".to_string(),
-            max_tokens: 1024,
+            max_tokens: 2048,
             stream: true,
             prompt: "hello".to_string(),
         }
@@ -40,7 +42,7 @@ struct TrueData {
 }
 
 
-async fn send_request(prompt: String, tx: tokio) {
+pub async fn send_request(prompt: String, sender:tokio::sync::mpsc::Sender<Result<Event,Infallible>>) {
     let client = Client::new();
     let mut post_data = PostData::default();
     post_data.prompt = prompt;
@@ -51,7 +53,7 @@ async fn send_request(prompt: String, tx: tokio) {
     headers.insert(CONNECTION, "keep-alive".parse().unwrap());
     headers.insert(
         AUTHORIZATION,
-        "Bearer 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"
+        "Bearer "
             .parse()
             .unwrap(),
     );
@@ -68,12 +70,15 @@ async fn send_request(prompt: String, tx: tokio) {
         let s = String::from_utf8(v.to_vec()).unwrap();
         let c = s.trim_end_matches("\n\n").trim_start_matches("data: ");
         if c == "[DONE]".to_string() {
+            sender.send(Ok(Event::default().data(c))).await.unwrap();
             return;
         }
         if let Ok(value) = serde_json::from_str::<RecvData>(c) {
-            println!("{:?}", value);
+            sender.send(Ok(Event::default().data(value.choices[0].text.clone()))).await.unwrap();
         } else {
-            println!("{:?}", c);
+            println!("{:?}",s);
+            sender.send(Ok(Event::default().data("[ERROR]"))).await.unwrap();
+            return;
         }
     }
 }

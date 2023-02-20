@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>chatGpt</title>
+</head>
+<body>
+    <input id="input" placeholder="请输入你想问的问题">
+    <button onclick="submit()">提交</button>
+    <div id="content"></div>
+
+    <script>
+        const contentDiv = document.getElementById("content");
+
+        function submit () {
+            contentDiv.innerHTML = "";
+            const content = document.getElementById("input").value
+            const source = new EventSource("/sse?content="+content)
+            source.onmessage = (e) => {
+                if (e.data === '[DONE]' || e.data === '[ERROR]') {
+                    source.close();
+                }
+                contentDiv.innerHTML += e.data;
+            }
+        }
+
+    </script>
+</body>
+</html>
