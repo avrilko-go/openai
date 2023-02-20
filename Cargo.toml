@@ -1,0 +1,21 @@
+[package]
+name = "chat"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+path = "./src/server.rs"
+name = "server"
+
+[dependencies]
+async-stream = "0.3.4"
+axum = { version = "0.6.7", features = ["headers"] }
+bytes = "1.4.0"
+futures = "0.3.26"
+reqwest = { version = "0.11.14", features = ["stream", "json"] }
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+tokio = { version = "1.25.0", features = ["full"] }
+tokio-stream = "0.1.11"
